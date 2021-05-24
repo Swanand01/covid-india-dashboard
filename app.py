@@ -1,12 +1,28 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import geopandas as gpd
+import matplotlib.pyplot as plt
 
 india_df = pd.read_csv('https://api.covid19india.org/csv/latest/case_time_series.csv')
 state_df = pd.read_csv('https://api.covid19india.org/csv/latest/state_wise_daily.csv')
 state_cu = pd.read_csv('https://api.covid19india.org/csv/latest/states.csv')
 district_data = pd.read_csv('https://api.covid19india.org/csv/latest/districts.csv')
 district_data.replace('Unknown', 'Other', inplace=True)
+df = gpd.read_file('india_administrative_state_boundary.shp')
+state_data = pd.read_csv('https://api.covid19india.org/csv/latest/state_wise.csv')
+state_data = pd.read_csv('https://api.covid19india.org/csv/latest/state_wise.csv')
+
+state_data.drop(labels=[0, 31, 18], inplace=True)
+df.drop(labels=7, inplace=True)
+df = df.rename(columns={'st_nm':'State'})
+df = df[['State', 'geometry']]
+df = df.replace('Dadara & Nagar Havelli', 'Dadra and Nagar Haveli and Daman and Diu')
+df = df.replace('NCT of Delhi', 'Delhi')
+df = df.replace('Jammu & Kashmir', 'Jammu and Kashmir')
+df = df.replace('Arunanchal Pradesh', 'Arunachal Pradesh')
+df = df.replace('Andaman & Nicobar Island', 'Andaman and Nicobar Islands')
+merged = df.merge(state_data, how='left')
 
 state_codes = {'Andaman and Nicobar Islands': 'AN',
  'Andhra Pradesh': 'AP',
@@ -73,6 +89,20 @@ def country_plots():
     create_plot(x=india_df['Date_YMD'], y=india_df['Total Confirmed']-india_df['Total Recovered']-india_df['Total Deceased'], labels={'x':'Time', 'y':'Active cases'})
  
 with st.beta_container():
+
+    variable = st.selectbox('Select map mode', ('Confirmed', 'Recovered', 'Deaths', 'Active'))
+    variable_color = {'Confirmed': 'Reds', 'Recovered': 'Greens', 'Deaths': 'Greys', 'Active': 'Blues'}
+    plt.style.use("dark_background")
+    fig, ax = plt.subplots(1)
+    fig.patch.set_alpha(0)
+    ax.axis('off')
+    vmin, vmax = 0, 10000000
+    ax.set_title('{} cases'.format(variable))
+    sm = plt.cm.ScalarMappable(cmap=variable_color[variable], norm=plt.Normalize(vmin=vmin, vmax=vmax))
+    sm.set_array([])
+    fig.colorbar(sm)
+    merged.plot(column=variable, cmap=variable_color[variable], linewidth=0.8, ax=ax, edgecolor='0.2')
+    st.pyplot(fig, use_container_width=True)
 
     country_plots()
 
