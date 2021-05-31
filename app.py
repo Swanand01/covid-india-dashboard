@@ -76,33 +76,128 @@ def create_plot(x, y, labels):
     st.plotly_chart(fig, use_container_width=True)
 
 def country_plots():
-    st.subheader('Confirmed cases in India')
-    create_plot(x=india_df['Date_YMD'], y=india_df['Total Confirmed'], labels={'x':'Time', 'y':'Confirmed cases'})
-    
-    st.subheader('Recoveries in India')
-    create_plot(x=india_df['Date_YMD'], y=india_df['Total Recovered'], labels={'x':'Time', 'y':'Recoveries'})
-
-    st.subheader('Deaths in India')
-    create_plot(x=india_df['Date_YMD'], y=india_df['Total Deceased'], labels={'x':'Time', 'y':'Deaths'})
-    
-    st.subheader('Active cases in India')
-    create_plot(x=india_df['Date_YMD'], y=india_df['Total Confirmed']-india_df['Total Recovered']-india_df['Total Deceased'], labels={'x':'Time', 'y':'Active cases'})
- 
-with st.beta_container():
 
     variable = st.selectbox('Select map mode', ('Confirmed', 'Recovered', 'Deaths', 'Active'))
-    variable_color = {'Confirmed': 'Reds', 'Recovered': 'Greens', 'Deaths': 'Greys', 'Active': 'Blues'}
+    variable_color = {'Confirmed': 'Reds', 
+                      'Recovered': 'Greens', 
+                      'Deaths': 'Greys', 
+                      'Active': 'Blues'}
+
     plt.style.use("dark_background")
     fig, ax = plt.subplots(1)
+
     fig.patch.set_alpha(0)
     ax.axis('off')
     vmin, vmax = 0, 10000000
     ax.set_title('{} cases'.format(variable))
-    sm = plt.cm.ScalarMappable(cmap=variable_color[variable], norm=plt.Normalize(vmin=vmin, vmax=vmax))
+    sm = plt.cm.ScalarMappable(cmap=variable_color[variable], 
+                               norm=plt.Normalize(vmin=vmin, vmax=vmax))
     sm.set_array([])
     fig.colorbar(sm)
-    merged.plot(column=variable, cmap=variable_color[variable], linewidth=0.8, ax=ax, edgecolor='0.2')
+
+    merged.plot(column=variable, 
+                cmap=variable_color[variable], 
+                linewidth=0.8, 
+                ax=ax, 
+                edgecolor='0.2')
     st.pyplot(fig, use_container_width=True)
+
+    st.subheader('Confirmed cases in India')
+    create_plot(x=india_df['Date_YMD'], 
+                y=india_df['Total Confirmed'], 
+                labels={'x':'Time', 'y':'Confirmed cases'})
+    
+    st.subheader('Recoveries in India')
+    create_plot(x=india_df['Date_YMD'], 
+                y=india_df['Total Recovered'], 
+                labels={'x':'Time', 'y':'Recoveries'})
+
+    st.subheader('Deaths in India')
+    create_plot(x=india_df['Date_YMD'], 
+                y=india_df['Total Deceased'], 
+                labels={'x':'Time', 'y':'Deaths'})
+    
+    st.subheader('Active cases in India')
+    create_plot(x=india_df['Date_YMD'], 
+                y=india_df['Total Confirmed']-india_df['Total Recovered']-india_df['Total Deceased'], 
+                labels={'x':'Time', 'y':'Active cases'})
+ 
+def state_plots(state, mode):
+    if mode == 'Cumulative':
+        st.subheader('Confirmed cases in {}'.format(state))
+        create_plot(x=state_cu[state_cu['State'] == state]['Date'], 
+                    y=state_cu[state_cu['State'] == state]['Confirmed'], 
+                    labels={'x': 'Time', 'y': 'Confirmed'})
+
+        st.subheader('Recoveries in {}'.format(state))
+        create_plot(x=state_cu[state_cu['State'] == state]['Date'], 
+                    y=state_cu[state_cu['State'] == state]['Recovered'], 
+                    labels={'x': 'Time', 'y': 'Recoveries'})
+
+        st.subheader('Deaths in {}'.format(state))
+        create_plot(x=state_cu[state_cu['State'] == state]['Date'], 
+                    y=state_cu[state_cu['State'] == state]['Deceased'], 
+                    labels={'x': 'Time', 'y': 'Deaths'})
+    
+        st.subheader('Active cases in  {}'.format(state))
+        create_plot(x=state_cu[state_cu['State'] == state]['Date'], 
+                    y=state_cu[state_cu['State'] == state]['Confirmed'] - state_cu[state_cu['State'] == state]['Recovered'] - state_cu[state_cu['State'] == state]['Deceased'] - state_cu[state_cu['State'] == state]['Other'], 
+                    labels={'x': 'Time', 'y':'Active cases'})
+    
+    if mode == 'Daily':
+        st.subheader('Daily Confirmed cases in {}'.format(state))
+        create_plot(x=state_df[state_df['Status'] == 'Confirmed']['Date_YMD'], 
+                    y=state_df[state_df['Status'] == 'Confirmed'][state_codes[state]], 
+                    labels={'x':'Time', 'y':'Daily confirmed cases'})
+
+        st.subheader('Daily Recoveries in {}'.format(state))
+        create_plot(x=state_df[state_df['Status'] == 'Recovered']['Date_YMD'], 
+                    y=state_df[state_df['Status'] == 'Recovered'][state_codes[state]], 
+                    labels={'x':'Time', 'y':'Daily recovered cases'})
+
+        st.subheader('Daily Deaths in {}'.format(state))
+        create_plot(x=state_df[state_df['Status'] == 'Deceased']['Date_YMD'], 
+                    y=state_df[state_df['Status'] == 'Deceased'][state_codes[state]], 
+                    labels={'x':'Time', 'y':'Daily deaths'})
+
+        st.subheader('Daily Active cases in {}'.format(state))
+        active = state_df[state_df['Status'] == 'Confirmed'][state_codes[state]].reset_index() - state_df[state_df['Status'] =='Recovered'][state_codes[state]].reset_index() - state_df[state_df['Status'] =='Deceased'][state_codes[state]].reset_index()
+        create_plot(x=state_df[state_df['Status'] == 'Confirmed']['Date_YMD'], 
+                    y=active[state_codes[state]], 
+                    labels={'x':'Time', 'y':'Daily Active cases'})
+    
+    df = state_cu[state_cu['State'] == state]['Confirmed'] - state_cu[state_cu['State'] == state]['Recovered'] - state_cu[state_cu['State'] == state]['Deceased'] - state_cu[state_cu['State'] == state]['Other']
+    
+    st.text('Active ratio for {} is {:0.2f}%'
+            .format(state, df.iloc[-1] / state_cu[state_cu['State'] == state]['Confirmed'].iloc[-1] * 100))
+    st.text('Recovery ratio for {} is {:0.2f}%'
+            .format(state, state_cu[state_cu['State'] == state]['Recovered'].iloc[-1] / state_cu[state_cu['State'] == state]['Confirmed'].iloc[-1]*100))
+    st.text('Death ratio for {} is {:0.2f}%'
+            .format(state, state_cu[state_cu['State'] == state]['Deceased'].iloc[-1] / state_cu[state_cu['State'] == state]['Confirmed'].iloc[-1]*100))
+
+def district_plots(district):
+    st.subheader('Confirmed cases in {}'.format(district))
+    create_plot(x=district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Date'],
+                y=district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Confirmed'],
+                labels={'x': 'Time', 'y': 'Confirmed'})
+
+    st.subheader('Recoveries in {}'.format(district))
+    create_plot(x=district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Date'],
+                y=district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Recovered'],
+                labels={'x': 'Time', 'y': 'Recoveries'})
+
+    st.subheader('Deaths in {}'.format(district))
+    create_plot(x=district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Date'],
+                y=district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Deceased'],
+                labels={'x': 'Time', 'y': 'Deaths'})
+
+    st.subheader('Active cases in {}'.format(district))
+    create_plot(x=district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Date'],
+                y=district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Confirmed']-district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Recovered']-district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Deceased'],
+                labels={'x': 'Time', 'y': 'Active cases'})
+
+
+with st.beta_container():
 
     country_plots()
 
@@ -110,57 +205,10 @@ with st.beta_container():
     state = st.selectbox('Select state', tuple(state_codes.keys()))
     mode = st.selectbox('Select mode', ('Cumulative', 'Daily'))
     
-    if mode == 'Cumulative':
-        st.subheader('Confirmed cases in {}'.format(state))
-        create_plot(x=state_cu[state_cu['State'] == state]['Date'], y=state_cu[state_cu['State'] == state]['Confirmed'], labels={'x': 'Time', 'y': 'Confirmed'})
-
-        st.subheader('Recoveries in {}'.format(state))
-        create_plot(x=state_cu[state_cu['State'] == state]['Date'], y=state_cu[state_cu['State'] == state]['Recovered'], labels={'x': 'Time', 'y': 'Recoveries'})
-
-        st.subheader('Deaths in {}'.format(state))
-        create_plot(x=state_cu[state_cu['State'] == state]['Date'], y=state_cu[state_cu['State'] == state]['Deceased'], labels={'x': 'Time', 'y': 'Deaths'})
-    
-        st.subheader('Active cases in  {}'.format(state))
-        create_plot(x=state_cu[state_cu['State'] == state]['Date'], y=state_cu[state_cu['State'] == state]['Confirmed'] - state_cu[state_cu['State'] == state]['Recovered'] - state_cu[state_cu['State'] == state]['Deceased'] - state_cu[state_cu['State'] == state]['Other'], labels={'x': 'Time', 'y':'Active cases'})
-    
-    if mode == 'Daily':
-        st.subheader('Daily Confirmed cases in {}'.format(state))
-        create_plot(x=state_df[state_df['Status'] == 'Confirmed']['Date_YMD'], y=state_df[state_df['Status'] == 'Confirmed'][state_codes[state]], labels={'x':'Time', 'y':'Daily confirmed cases'})
-
-        st.subheader('Daily Recoveries in {}'.format(state))
-        create_plot(x=state_df[state_df['Status'] == 'Recovered']['Date_YMD'], y=state_df[state_df['Status'] == 'Recovered'][state_codes[state]], labels={'x':'Time', 'y':'Daily recovered cases'})
-
-        st.subheader('Daily Deaths in {}'.format(state))
-        create_plot(x=state_df[state_df['Status'] == 'Deceased']['Date_YMD'], y=state_df[state_df['Status'] == 'Deceased'][state_codes[state]], labels={'x':'Time', 'y':'Daily deaths'})
-
-        st.subheader('Daily Active cases in {}'.format(state))
-        active = state_df[state_df['Status'] == 'Confirmed'][state_codes[state]].reset_index() - state_df[state_df['Status'] =='Recovered'][state_codes[state]].reset_index() - state_df[state_df['Status'] =='Deceased'][state_codes[state]].reset_index()
-        create_plot(x=state_df[state_df['Status'] == 'Confirmed']['Date_YMD'], y=active[state_codes[state]], labels={'x':'Time', 'y':'Daily Active cases'})
-
-    df = state_cu[state_cu['State'] == state]['Confirmed'] - state_cu[state_cu['State'] == state]['Recovered'] - state_cu[state_cu['State'] == state]['Deceased'] - state_cu[state_cu['State'] == state]['Other']
-    st.text('Active ratio for {} is {:0.2f}%'.format(state, df.iloc[-1] / state_cu[state_cu['State'] == state]['Confirmed'].iloc[-1] * 100))
-    st.text('Recovery ratio for {} is {:0.2f}%'.format(state, state_cu[state_cu['State'] == state]['Recovered'].iloc[-1] / state_cu[state_cu['State'] == state]['Confirmed'].iloc[-1]*100))
-    st.text('Death ratio for {} is {:0.2f}%'.format(state, state_cu[state_cu['State'] == state]['Deceased'].iloc[-1] / state_cu[state_cu['State'] == state]['Confirmed'].iloc[-1]*100))
+    state_plots(state, mode)
 
     st.subheader("View data by district")
-    district = st.selectbox('Select district', district_data[district_data['State'] == state]['District'].unique())
+    district = st.selectbox('Select district', 
+               district_data[district_data['State'] == state]['District'].unique())
      
-    st.subheader('Confirmed cases in {}'.format(district))
-    create_plot(x=district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Date'],
-        y=district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Confirmed'],
-        labels={'x': 'Time', 'y': 'Confirmed'})
-
-    st.subheader('Recoveries in {}'.format(district))
-    create_plot(x=district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Date'],
-        y=district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Recovered'],
-        labels={'x': 'Time', 'y': 'Recoveries'})
-
-    st.subheader('Deaths in {}'.format(district))
-    create_plot(x=district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Date'],
-        y=district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Deceased'],
-        labels={'x': 'Time', 'y': 'Recoveries'})
-
-    st.subheader('Active cases in {}'.format(district))
-    create_plot(x=district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Date'],
-        y=district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Confirmed']-district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Recovered']-district_data[(district_data['State'] == state) & (district_data['District'] == district)]['Deceased'],
-        labels={'x': 'Time', 'y': 'Recoveries'})
+    district_plots(district)
