@@ -56,6 +56,8 @@ To contribute,
   
 ## Screenshots
 
+![App Screenshot](https://github.com/Swanand01/covid-india-dashboard/blob/main/screenshots/c1.JPG)
 ![App Screenshot](https://github.com/Swanand01/covid-india-dashboard/blob/main/screenshots/c2.JPG)
+![App Screenshot](https://github.com/Swanand01/covid-india-dashboard/blob/main/screenshots/c3.JPG)
 
   
